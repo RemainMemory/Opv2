@@ -1,0 +1,53 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+
+# Virtual environment
+env/
+venv/
+.venv/
+ENV/
+
+# VS Code settings
+.vscode/
+
+# Mac系统文件
+.DS_Store
+
+# Log files
+*.log
+
+# System files
+Thumbs.db
+
+# Python packaging
+*.egg
+*.egg-info/
+dist/
+build/
+*.manifest
+*.spec
+
+# Git LFS tracked files over 50MB (你也可以使用 Git LFS)
+*.pdf
+
+# Ignore large PDFs
+data/pdfs/*.pdf
+
+# Local config files
+*.env
+.env.*
+
+# Ignore temporary files
+*.bak
+*.swp
+*~
+
+# Ignore test outputs or OCR dumps
+outputs/
+temp/
+*.pdf

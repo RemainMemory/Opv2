@@ -1,0 +1,40 @@
+计算机操作系统采用哪种处理方式，当然是各执一词。Hoare采用了第一种处理方式，而Hansan选择了两者的折中，他规定管程中的过程所执行的signal操作是过程体的最后一个操作，于是，进程P执行signal操作后立即退出管程，因而，进程Q马上被恢复执行。
+2.5经典进程的同步问题在多道程序环境下，进程同步问题十分重要，也是相当有趣的问题，因而吸引了不少学者对它进行研究，由此而产生了一系列经典的进程同步问题，其中较有代表性的是“生产者一消费者”问题、“读者一写者问题”、“哲学家进餐问题”等等。通过对这些问题的研究和学习，可以帮助我们更好地理解进程同步的概念及实现方法。
+2.5.1生产者-消费者问题前面我们已经对生产者-消费者问题(Theproceducer-consumerproblem)做了一些描述，但未考虑进程的互斥与同步问题，因而造成了数据Counter的不定性。由于生产者-消费者问题是相互合作的进程关系的一种抽象，例如，在输入时，输入进程是生产者，计算进程是消费者；而在输出时，则计算进程是生产者，而打印进程是消费者，因此，该问题有很大的代表性及实用价值。本小节将利用信号量机制来解决生产者一消费者问题。
+1.利用记录型信号量解决生产者-消费者问题假定在生产者和消费者之间的公用缓冲池中具有n个缓冲区，这时可利用互厅信号量mutex实现诸进程对缓冲池的互斥使用；利用信号量empty和full分别表示缓冲池中空缓冲区和满缓冲区的数量。又假定这些生产者和消费者相互等效，只要缓冲池未满，生产者便可将消息送入缓冲池；只要缓冲池未空，消费者便可从缓冲池中取走一个消息。对生产者-消费者问题可描述如下：
+int in=0, out=0;item buffer[n];semaphore mutex=1, empty=n, full=0;void proceducerO{} opproducer an item nextp;...
+wait(empty);wait(mutex);buffer[in] =nextp;in :=(in+1) % n;signal(mutex);signal(full);}while(TRUE);60第二章进程的描述与控制void consumerO{do{wait(full);wait(mutex);nextc= buffer[out];out =(out+1) % n;signal(mutex);signal(empty);consumertheitem innextc;}while(TRUE);void mainO{cobeginproceducer(); consumerO;coend7在生产者-消费者问题中应注意：首先，在每个程序中用于实现互斥的wait(mutex）和signal(mutex)必须成对地出现；其次，对资源信号量empty和full的wait和signal操作，同样需要成对地出现，但它们分别处于不同的程序中。例如，wait(empty)在计算进程中，而signal(empty)则在打印进程中，计算进程若因执行wait(empty)而阻塞，则以后将由打印进程将它唤醒；最后，在每个程序中的多个wait操作顺序不能颠倒。应先执行对资源信号量的wait操作，然后再执行对互斥信号量的wait操作，否则可能引起进程死锁。
+2.利用AND信号量解决生产者-消费者问题对于生产者-消费者问题，也可利用AND信号量来解决，即用Swait(empty，mutex)来代替wait（empty）和wait（mutex）：用Ssignal（mutex，full)来代替signal（mutex）和signal（full)：
+用Swait(full，mutex)代替wait(full)和wait(mutex)，以及用Ssignal(mutex，empty)代替Signal(mutex)和Signal(empty)。利用AND信号量来解决生产者-消费者问题的算法中的生产者和消费者可描述如下：
+int in=0,out=0;item buffer[n];semaphoremutex=1,empty=n,full=0;voidproceducerO}opproducer an item nextp;.·Swait(empty, mutex);buffer[in] =nextp;61计算机操作系统in :=(in+1) % n;Ssignal(mutex, full);}while(TRUE);void consumerO1opSwait(full, mutex);nextc= buffer[out];out =(out+1) % n;Ssignal(mutex,empty);consumer theitem innextc;}while(TRUE);3.利用管程解决生产者-消费者问题在利用管程方法来解决生产者-消费者问题时，首先便是为它们建立一个管程，并命名为procducerconsumer，或简称为PC。其中包括两个过程：
+(1）put(x)过程。生产者利用该过程将自己生产的产品投放到缓冲池中，并用整型变量count来表示在缓冲池中已有的产品数目，当count≥N时，表示缓冲池已满，生产者须等待。
+(2）get(x)过程。消费者利用该过程从缓冲池中取出一个产品，当count≤0时，表示缓冲池中已无可取用的产品，消费者应等待。
+对于条件变量notfull和notempty，分别有两个过程cwait和csignal对它们进行操作：
+(1）cwait（condition)过程：当管程被一个进程占用时，其他进程调用该过程时阻塞，并挂在条件condition的队列上。
+(2）csignal(condition)过程：唤醒在cwait执行后阻塞在条件condition队列上的进程，如果这样的进程不止一个，则选择其中一个实施唤醒操作；如果队列为空，则无操作而返回。
+PC管程可描述如下：
+Monitorprocducerconsumeritem buffer[N];int in, out;condition notfull, notempty;int count;public:
+void put(item x){if (count>=N) cwait(notfull);buffer[in] = x;in =(in+1) % N;count++;csignal(notempty);62第二章进程的描述与控制void get(item x) {if(count<=O)cwait(notempty);x =buffer[out];out =(out+1) % N;count--;csignal(notfull);1{in=0;out=O;count=0;}}PC;在利用管程解决生产者-消费者问题时，其中的生产者和消费者可描述为：
+void producerO {item x;while(TRUE) {produce an item in nextp;PC.put(x);void consumerO{item x;while(TRUE){PC.get(x);consume the item in nextc;1void mainOcobeginproceducerO;;consumerO;coend2.5.2哲学家进餐问题由Dijkstra提出并解决的哲学家进餐问题(TheDinningPhilosophersProblem)是典型的同步问题。该问题是描述有五个哲学家共用一张圆桌，分别坐在周围的五张椅子上，在圆桌上有五个碗和五只筷子，他们的生活方式是交替地进行思考和进餐。平时，一个哲学家进行思考，饥饿时便试图取用其左右最靠近他的筷子，只有在他拿到两只筷子时才能进餐。
+进餐毕，放下筷子继续思考。
+63计算机操作系统1.利用记录型信号量解决哲学家进餐问题经分析可知，放在桌子上的筷子是临界资源，在一段时间内只允许一位哲学家使用。
+为了实现对筷子的互斥使用，可以用一个信号量表示一只筷子，由这五个信号量构成信号量数组。其描述如下：
+semaphore chopstick[5]={1,1,1,1,1};所有信号量均被初始化为1，第i位哲学家的活动可描述为：
+}opwait(chopstick[i]);wait(chopstick[(i+1)%5]);...
+//eat...
+signal(chopstick[i]);signal(chopstick[(i+1)%5]);//think}while[TRUE];在以上描述中，当哲学家饥饿时，总是先去拿他左边的筷子，即执行wait（chopstick[i])；
+成功后，再去拿他右边的筷子，即执行wait(chopstick[(i+1)%5])；又成功后便可进餐。进餐毕，又先放下他左边的筷子，然后再放他右边的筷子。虽然，上述解法可保证不会有两个相邻的哲学家同时进餐，但却有可能引起死锁。假如五位哲学家同时饥饿而各自拿起左边的筷子时，就会使五个信号量chopstick均为0；当他们再试图去拿右边的筷子时，都将因无筷子可拿而无限期地等待。对于这样的死锁问题，可采取以下几种解决方法：
+够进餐，并在用毕时能释放出他用过的两只筷子，从而使更多的哲学家能够进餐。
+(2）仅当哲学家的左、右两只筷子均可用时，才允许他拿起筷子进餐。
+则相反。按此规定，将是1、2号哲学家竞争1号筷子；3、4号哲学家竞争3号筷子。即五位哲学家都先竞争奇数号筷子，获得后，再去竞争偶数号筷子，最后总会有一位哲学家能获得两只筷子而进餐。
+2.利用AND信号量机制解决哲学家进餐问题本质上就是前面所介绍的AND同步问题，故用AND信号量机制可获得最简洁的解法。
+semaphore chopstick chopstick[5]={1,1, 1,1, 1};} op...
+//think...
+64第二章进程的描述与控制Sswait(chopstick[(i+1)%5], chopstick[i]);*".
+/eatSsignal(chopstick[(i+1)%5],chopstick[i]);}while[TRUE];2.5.3读者-写者问题一个数据文件或记录可被多个进程共享，我们把只要求读该文件的进程称为“Reader进程”，其他进程则称为“Writer进程”。允许多个进程同时读一个共享对象，因为读操作不会使数据文件混乱。但不允许一个Writer进程和其他Reader进程或Writer进程同时访问共享对象。因为这种访问将会引起混乱。所谓“读者-写者（Reader-WriterProblem）问题”
+是指保证一个Writer进程必须与其他进程互斥地访问共享对象的同步问题。读者-写者问题常被用来测试新同步原语。
+1.利用记录型信号量解决读者-写者问题为实现Reader与Writer进程间在读或写时的互斥而设置了一个互斥信号量Wmutex。
+另外，再设置一个整型变量Readcount表示正在读的进程数目。由于只要有一个Reader进程在读，便不允许Writer进程去写。因此，仅当Readcount=O，表示尚无Reader进程在读时，Reader进程才需要执行Wait（Wmutex）操作。若wait（Wmutex）操作成功，Reader进程便可去读，相应地，做Readcount+1操作。同理，仅当Reader进程在执行了Readcount减1操作后其值为O时，才须执行signal（Wmutex）操作，以便让Writer进程写操作。又因为信号量rmutex。
+读者-写者问题可描述如下：
+semaphorermutex=1,wmutex=l;int readcount=0;void readerO{}opwait(rmutex);if (readcount==0) wait(wmutex);readcount++;signal(rmutex);perform read operation;wait(rmutex);readcount--;if(readcount==O)signal(wmutex);65计算机操作系统signal(rmutex);↓while(TRUE);}void writerO{doIwait(wmutex);perform write operation;signal(wmutex);}while(TRUE);1void mainOcobeginreaderO;  writerO;coend2.利用信号量集机制解决读者-写者问题这里的读者一写者问题，与前面的略有不同，它增加了一个限制，即最多只允许RN个读者同时读。为此，又引入了一个信号量L，并赋予其初值为RN，通过执行wait(L，1，1)操作来控制读者的数目，每当有一个读者进入时，就要先执行wait(L，1，1)操作，使L的值减1。当有RN个读者进入读后，L便减为0，第RN+1个读者要进入读时，必然会因wait(L，1,1)操作失败而阻塞。对利用信号量集来解决读者-写者问题的描述如下：
+int RN;semaphore L=RN, mx=1;void readerO {}opSwait(L, 1, 1);Swait(mx, 1, 0);perform read operation;Ssignal(L, 1);↓while(TRUE);7void writerO{do {Swait(mx,1,1;L,RN, 0);performwriteoperation;Ssignal(mx, 1);66
