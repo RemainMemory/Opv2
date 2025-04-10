@@ -89,7 +89,7 @@ Swait(full, mutex);
 nextc= buffer[out];
 out =(out+1) % n;
 Ssignal(mutex,empty);
-consumer theitem innextc;
+consumertheitem innextc;
 }while(TRUE);
 3.利用管程解决生产者-消费者问题
 在利用管程方法来解决生产者-消费者问题时，首先便是为它们建立一个管程，并命名
@@ -110,7 +110,7 @@ int in, out;
 condition notfull, notempty;
 int count;
 public:
-void put(item x){
+voidput(item x){
 if (count>=N) cwait(notfull);
 buffer[in] = x;
 in =(in+1) % N;
@@ -232,12 +232,12 @@ if(readcount==O)signal(wmutex);
 --- Page 75 ---
 计算机操作系统
 signal(rmutex);
-↓while(TRUE);
+}while(TRUE);
 }
 void writerO{
 doI
 wait(wmutex);
-perform write operation;
+ perform write operation;
 signal(wmutex);
 }while(TRUE);
 1
@@ -267,3 +267,37 @@ Swait(mx,1,1;L,RN, 0);
 performwriteoperation;
 Ssignal(mx, 1);
 66
+
+--- Page 76 ---
+第二章进程的描述与控制
+}while(TRUE);
+void mainO{
+cobegin
+readerO;writerO;
+coend
+其中，Swait(mx，1,0)语句起着开关的作用。只要无writer进程进入写操作，mx=1，
+reader进程就都可以进入读操作。但只要一旦有writer进程进入写操作时，其mx=0，则
+任何reader进程就都无法进入读操作。Swait(mx，1，1，L，RN，0)语句表示仅当既无writer
+进程在写操作（mx=1）、又无reader进程在读操作（L=RN）时，writer进程才能进入临界区
+进行写操作。
+2.6进程通信
+进程通信是指进程之间的信息交换。由于进程的互斥与同步，需要在进程间交换一定
+的信息，故不少学者将它们也归为进程通信，但只能把它们称为低级进程通信。我们以信
+OS只为进程之间的通信提供了共享存储器。而关于进程之间通信所需之共享数据结构的设
+置、数据的传送、进程的互斥与同步，都必须由程序员去实现，显然，对于用户而言，这
+是非常不方便的。
+在进程之间要传送大量数据时，应当利用OS提供的高级通信工具，该工具最主要的
+特点是：
+（1）使用方便。OS隐藏了实现进程通信的具体细节，向用户提供了一组用于实现高级
+通信的命令（原语），用户可方便地直接利用它实现进程之间的通信。或者说，通信过程对
+用户是透明的。这样就大大减少了通信程序编制上的复杂性。
+(2）高效地传送大量数据。用户可直接利用高级通信命令(原语)高效地传送大量的数据。
+2.6.1进程通信的类型
+随着OS的发展，用于进程之间实现通信的机制也在发展，并已由早期的低级进程通
+信机制发展为能传送大量数据的高级通信工具机制。目前，高级通信机制可归结为四大类：
+共享存储器系统、管道通信系统、消息传递系统以及客户机-服务器系统。
+1.共享存储器系统（Shared-MemorySystem)
+在共享存储器系统中，相互通信的进程共享某些数据结构或共享存储区，进程之间能
+够通过这些空间进行通信。据此，又可把它们分成以下两种类型：
+（1）基于共享数据结构的通信方式。在这种通信方式中，要求诸进程公用某些数据结
+67
