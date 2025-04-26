@@ -103,16 +103,22 @@ def process_excel_file(file_path, max_length=MAX_LENGTH):
             # 对每一块正文生成embedding
             content_embedding = embed_text(chunk)[0]
             
+            # 将embedding转换为逗号分隔的字符串
+            content_embedding_str = ",".join(map(str, content_embedding))
+            title1_embedding_str = ",".join(map(str, embed_text(row['一级标题'])[0]))
+            title2_embedding_str = ",".join(map(str, embed_text(row['二级标题'])[0]))
+            title3_embedding_str = ",".join(map(str, embed_text(row['三级标题'])[0]))
+            
             # 为每个部分生成嵌入
             embeddings.append({
                 "一级标题": row['一级标题'],
                 "二级标题": row['二级标题'],
                 "三级标题": row['三级标题'],
                 "正文": chunk,
-                "一级标题embedding": embed_text(row['一级标题'])[0],  # 获取一级标题的嵌入
-                "二级标题embedding": embed_text(row['二级标题'])[0],
-                "三级标题embedding": embed_text(row['三级标题'])[0],
-                "正文embedding": content_embedding,  # 正文的embedding
+                "一级标题embedding": title1_embedding_str,  # 转换后的逗号分隔的嵌入
+                "二级标题embedding": title2_embedding_str,
+                "三级标题embedding": title3_embedding_str,
+                "正文embedding": content_embedding_str,  # 转换后的正文嵌入
             })
     
     return embeddings

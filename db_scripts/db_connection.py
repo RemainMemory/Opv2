@@ -1,4 +1,4 @@
-import pg8000
+import psycopg2
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -9,7 +9,7 @@ def create_connection():
     """创建 PostgreSQL 数据库连接"""
     try:
         # 创建连接
-        conn = pg8000.connect(
+        conn = psycopg2.connect(
             host=DB_HOST,
             port=DB_PORT,
             database=DB_NAME,
