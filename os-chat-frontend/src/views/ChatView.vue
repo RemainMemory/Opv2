@@ -18,6 +18,7 @@
 
     <!-- 右侧聊天区域 -->
     <div class="chat-area">
+      <!-- 顶部导航栏 -->
       <header class="top-header">
         <button class="export-btn" @click="exportChat">导出对话</button>
         <div class="dropdown-wrapper" @click="toggleDropdown">
@@ -32,28 +33,28 @@
         </div>
       </header>
 
+      <!-- 聊天区域 -->
       <div class="chat-panel">
         <div class="chat-box" ref="chatBoxRef" @scroll="handleScroll">
           <div v-for="(item, index) in currentChat" :key="index" class="chat-item">
-            <div class="user-message">
-              <span>{{ item.question }}</span>
+            <div class="message user">
+              <div class="user-message">
+                <span>{{ item.question }}</span>
+              </div>
             </div>
-            <div v-if="item.loading" class="bot-message">
-              <div class="spinner"></div>
-            </div>
-            <div v-else class="bot-message">
-              <span v-html="renderMarkdown(item.answer)"></span>
+            <div class="message bot">
+              <div v-if="item.loading" class="bot-message">
+                <div class="spinner"></div>
+              </div>
+              <div v-else class="bot-message">
+                <span v-html="renderMarkdown(item.answer)"></span>
+              </div>
             </div>
           </div>
-          <button
-            v-if="showScrollButton"
-            class="scroll-bottom"
-            @click="scrollToBottom"
-          >
-            ⬇️
-          </button>
+          <button v-if="showScrollButton" class="scroll-bottom" @click="scrollToBottom">⬇️</button>
         </div>
 
+        <!-- 输入区域 -->
         <div class="chat-input">
           <textarea
             ref="textareaRef"
@@ -95,7 +96,10 @@ const toggleDropdown = () => {
 const scrollToBottom = () => {
   nextTick(() => {
     if (chatBoxRef.value) {
-      chatBoxRef.value.scrollTop = chatBoxRef.value.scrollHeight
+      chatBoxRef.value.scrollTo({
+        top: chatBoxRef.value.scrollHeight,
+        behavior: 'smooth'
+      })
     }
   })
 }
@@ -108,8 +112,13 @@ const handleScroll = () => {
 
 const autoResize = () => {
   if (textareaRef.value) {
-    textareaRef.value.style.height = 'auto'
-    textareaRef.value.style.height = textareaRef.value.scrollHeight + 'px'
+    const value = textareaRef.value.value.trim()
+    if (value === '') {
+      textareaRef.value.style.height = '50px'
+    } else {
+      textareaRef.value.style.height = 'auto'
+      textareaRef.value.style.height = textareaRef.value.scrollHeight + 'px'
+    }
   }
 }
 
@@ -170,15 +179,23 @@ const sendQuestion = async () => {
   const newRecord = { question, answer: '', loading: true }
   currentChat.value.push(newRecord)
   userInput.value = ''
+  await nextTick()
   autoResize()
 
   const index = currentChat.value.length - 1
 
   try {
     const answer = await getAnswer(question)
-    currentChat.value[index].answer = answer
     currentChat.value[index].loading = false
-    scrollToBottom()
+    currentChat.value[index].answer = ''
+
+    // 打字机效果
+    for (let i = 0; i < answer.length; i++) {
+      currentChat.value[index].answer += answer[i]
+      await new Promise(resolve => setTimeout(resolve, 20))
+      scrollToBottom()
+    }
+
     await nextTick()
     textareaRef.value?.focus()
   } catch (err) {
@@ -192,7 +209,6 @@ const sendQuestion = async () => {
 </script>
 
 <style scoped>
-/* 总体布局 */
 .chat-container {
   display: flex;
   height: 100vh;
@@ -201,8 +217,6 @@ const sendQuestion = async () => {
   font-family: 'Segoe UI', sans-serif;
   overflow: hidden;
 }
-
-/* 历史记录栏 */
 .history-panel {
   width: 260px;
   background-color: #2a2a2a;
@@ -243,14 +257,11 @@ const sendQuestion = async () => {
 .new-chat:hover {
   background-color: #4a4a4a;
 }
-
-/* 右侧聊天区域 */
 .chat-area {
   flex: 1;
   display: flex;
   flex-direction: column;
   background-color: #1e1e1e;
-  height: 100vh;
 }
 .top-header {
   height: 48px;
@@ -268,9 +279,6 @@ const sendQuestion = async () => {
   padding: 6px 12px;
   border-radius: 6px;
   cursor: pointer;
-}
-.export-btn:hover {
-  background-color: #4a4a4a;
 }
 .dropdown-wrapper {
   position: relative;
@@ -306,26 +314,21 @@ const sendQuestion = async () => {
 .dropdown div {
   padding: 8px 12px;
   cursor: pointer;
-  white-space: nowrap;
   text-align: center;
 }
 .dropdown div:hover {
   background-color: #444;
 }
-
-/* 聊天内容 */
 .chat-panel {
   flex: 1;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 48px);
   overflow: hidden;
 }
 .chat-box {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
-  background-color: #1e1e1e;
   position: relative;
 }
 .scroll-bottom {
@@ -340,43 +343,50 @@ const sendQuestion = async () => {
   cursor: pointer;
   font-size: 16px;
 }
-.chat-item {
-  margin-top: 12px;
+
+/* ✅ 一左一右 */
+.message {
+  display: flex;
+  margin: 8px 0;
 }
-.user-message {
-  text-align: right;
-  margin-left: auto;
-  background-color: #444;
-  padding: 10px;
-  border-radius: 10px;
-  max-width: 70%;
+.message.user {
+  justify-content: flex-end;
 }
-.bot-message {
-  text-align: left;
-  margin-right: auto;
-  background-color: #2f2f2f;
-  padding: 10px;
-  border-radius: 10px;
-  max-width: 70%;
-  margin-top: 6px;
+.message.bot {
+  justify-content: flex-start;
 }
 
-/* Loading转圈圈 */
+/* ✅ 气泡宽度自适应 */
+.user-message,
+.bot-message {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 10px;
+  word-break: break-word;
+  white-space: pre-wrap;
+  max-width: 70%;
+  min-width: 50px;
+  width: fit-content;
+}
+.user-message {
+  background-color: #444;
+}
+.bot-message {
+  background-color: #2f2f2f;
+}
+
 .spinner {
   width: 24px;
   height: 24px;
   border: 3px solid #ccc;
-  border-top: 3px solid #ffffff;
+  border-top: 3px solid #fff;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
-  margin: 10px 0;
 }
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
-
-/* 输入框 */
 .chat-input {
   display: flex;
   border-top: 1px solid #333;
@@ -406,8 +416,5 @@ const sendQuestion = async () => {
   cursor: pointer;
   font-size: 16px;
   border-left: 1px solid #555;
-}
-.chat-input button:hover {
-  background-color: #4a4a4a;
 }
 </style>
